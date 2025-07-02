@@ -64,7 +64,7 @@ defmodule PhoenixVite.Manifest do
   # https://vite.dev/guide/backend-integration.html
   def imported_chunks(%{} = manifest, name) do
     chunk = Map.fetch!(manifest, name)
-    imports = Map.get(chunk, "imports", [])
+    imports = chunk.imports
 
     {chunks, _seen} =
       Enum.reduce(imports, {[], MapSet.new()}, fn name, {acc_files, seen} ->
@@ -82,7 +82,7 @@ defmodule PhoenixVite.Manifest do
       {[], seen}
     else
       seen = MapSet.put(seen, name)
-      imports = Map.get(chunk, "imports", [])
+      imports = chunk.imports
 
       {chunks, seen} =
         Enum.reduce(imports, {[], seen}, fn name, {acc_chunks, seen} ->

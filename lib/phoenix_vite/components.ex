@@ -8,7 +8,7 @@ defmodule PhoenixVite.Components do
 
       <PhoenixVite.Components.assets
         names={["js/app.js", "css/app.css"]}
-        manifest={{:my_app, "priv/static/.vite/manifest.js"}}
+        manifest={{:my_app, "priv/static/.vite/manifest.json"}}
         dev_server={PhoenixVite.Components.has_vite_watcher?(MyAppWeb.Endpoint)}
       />
 
@@ -16,7 +16,7 @@ defmodule PhoenixVite.Components do
 
       <PhoenixVite.Components.assets
         names={["js/app.js", "css/app.css"]}
-        manifest={{:my_app, "priv/static/.vite/manifest.js"}}
+        manifest={{:my_app, "priv/static/.vite/manifest.json"}}
         dev_server={PhoenixVite.Components.has_vite_watcher?(MyAppWeb.Endpoint)}
         to_url={fn p -> static_url(@conn, p) end}
       />
@@ -111,14 +111,14 @@ defmodule PhoenixVite.Components do
       )
 
     ~H"""
-    <.reference_for_file :for={css <- @chunk["css"]} file={css} to_url={@to_url} cache />
-    <%= for chunk <- @imported_chunks, css <- chunk["css"] do %>
+    <.reference_for_file :for={css <- @chunk.css} file={css} to_url={@to_url} cache />
+    <%= for chunk <- @imported_chunks, css <- chunk.css do %>
       <.reference_for_file file={css} to_url={@to_url} cache />
     <% end %>
-    <.reference_for_file file={@chunk["file"]} to_url={@to_url} cache />
+    <.reference_for_file file={@chunk.file} to_url={@to_url} cache />
     <.reference_for_file
       :for={chunk <- @imported_chunks}
-      file={chunk}
+      file={chunk.file}
       rel="modulepreload"
       to_url={@to_url}
       cache

@@ -115,7 +115,7 @@ defmodule PhoenixVite.IgniterTest do
              12    - |    </script>
                 10 + |    <PhoenixVite.Components.assets
                 11 + |      names={["js/app.js", "css/app.css"]}
-                12 + |      manifest={{:test, "priv/static/.vite/manifest.js"}}
+                12 + |      manifest={{:test, "priv/static/.vite/manifest.json"}}
                 13 + |      dev_server={PhoenixVite.Components.has_vite_watcher?(TestWeb.Endpoint)}
                 14 + |      to_url={fn p -> static_url(@conn, p) end}
                 15 + |    />

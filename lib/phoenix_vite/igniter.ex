@@ -131,7 +131,7 @@ if Code.ensure_loaded?(Igniter) do
             """
                 <PhoenixVite.Components.assets
                   names={["js/app.js", "css/app.css"]}
-                  manifest={{#{inspect(app_name)}, "priv/static/.vite/manifest.js"}}
+                  manifest={{#{inspect(app_name)}, "priv/static/.vite/manifest.json"}}
                   dev_server={PhoenixVite.Components.has_vite_watcher?(#{inspect(endpoint)})}
                   to_url={fn p -> static_url(@conn, p) end}
                 />
