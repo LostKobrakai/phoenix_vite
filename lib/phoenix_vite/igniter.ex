@@ -1,6 +1,7 @@
 if Code.ensure_loaded?(Igniter) do
   defmodule PhoenixVite.Igniter do
     @moduledoc false
+    alias Sourceror.Zipper
 
     @doc """
     Create a minimal vite config at `assets/vite.config.mjs`
@@ -8,6 +9,7 @@ if Code.ensure_loaded?(Igniter) do
     def create_vite_config(igniter) do
       Igniter.create_new_file(igniter, "assets/vite.config.mjs", """
       import { defineConfig } from 'vite'
+      import { phoenixVitePlugin } from 'phoenix_vite'
       import tailwindcss from "@tailwindcss/vite";
 
       export default defineConfig({
@@ -28,7 +30,10 @@ if Code.ensure_loaded?(Igniter) do
           outDir: "../priv/static",
           emptyOutDir: true,
         },
-        plugins: [tailwindcss()]
+        plugins: [
+          tailwindcss(),
+          phoenixVitePlugin()
+        ]
       });
       """)
     end
@@ -66,7 +71,11 @@ if Code.ensure_loaded?(Igniter) do
     defp update_logo_path_with_static_url(igniter, path) do
       Igniter.update_file(igniter, path, fn source ->
         Rewrite.Source.update(source, :content, fn content ->
-          String.replace(content, ~s|~p"/images/logo.svg"|, ~s|static_url(~p"/images/logo.svg")|)
+          String.replace(
+            content,
+            ~s|~p"/images/logo.svg"|,
+            ~s|static_url(@conn, ~p"/images/logo.svg")|
+          )
         end)
       end)
     end
@@ -90,6 +99,51 @@ if Code.ensure_loaded?(Igniter) do
         {:code,
          Sourceror.parse_string!("PhoenixVite.cache_static_manifest_latest(#{inspect(app_name)})")}
       )
+    end
+
+    @doc """
+    Remove assets patterns from phoenix_live_reload
+
+    Assets reloading is handled by the vite dev server, not phoenix_live_reload
+    """
+    def use_only_vite_reloading_for_assets(igniter, app_name, endpoint) do
+      Igniter.update_elixir_file(igniter, "config/dev.exs", fn zipper ->
+        with {:ok, zipper} <-
+               Igniter.Code.Function.move_to_function_call_in_current_scope(
+                 zipper,
+                 :config,
+                 3,
+                 fn function_call ->
+                   Igniter.Code.Function.argument_equals?(function_call, 0, app_name) &&
+                     Igniter.Code.Function.argument_equals?(function_call, 1, endpoint) &&
+                     Igniter.Code.Function.argument_matches_predicate?(
+                       function_call,
+                       2,
+                       fn zipper ->
+                         Igniter.Code.Keyword.keyword_has_path?(zipper, [:live_reload, :patterns])
+                       end
+                     )
+                 end
+               ) do
+          Igniter.Code.Function.update_nth_argument(zipper, 2, fn zipper ->
+            Igniter.Code.Keyword.put_in_keyword(
+              zipper,
+              [:live_reload, :patterns],
+              [],
+              fn zipper ->
+                Igniter.Code.List.remove_from_list(zipper, fn zipper ->
+                  with {:sigil_r, _, [{:<<>>, _, [regex]}, []]} <- Zipper.node(zipper),
+                       true <- String.contains?(regex, "priv/static") do
+                    true
+                  else
+                    _ -> false
+                  end
+                end)
+              end
+            )
+          end)
+        end
+      end)
     end
 
     @doc """
@@ -218,19 +272,17 @@ if Code.ensure_loaded?(Igniter) do
       igniter
       |> Igniter.create_new_file("assets/package.json", """
       {
-        "workspaces": [
-          "../deps/*"
-        ],
         "dependencies": {
-          "phoenix": "workspace:*",
-          "phoenix_html": "workspace:*",
-          "phoenix_live_view": "workspace:*",
+          "phoenix": "file:../deps/phoenix",
+          "phoenix_html": "file:../deps/phoenix_html",
+          "phoenix_live_view": "file:../deps/phoenix_live_view",
           "topbar": "^3.0.0"
         },
         "devDependencies": {
-          "tailwindcss": "^4.1.0",
-          "daisyui": "^5.0.0",
           "@tailwindcss/vite": "^4.1.0",
+          "daisyui": "^5.0.0",
+          "phoenix_vite": "file:../deps/phoenix_vite",
+          "tailwindcss": "^4.1.0",
           "vite": "^6.3.0"
         }
       }
@@ -308,7 +360,7 @@ if Code.ensure_loaded?(Igniter) do
         [endpoint, :watchers, :vite],
         {:code,
          Sourceror.parse_string!("""
-         {PhoenixVite, :run, ["npx", ~w(vite dev), [cd: "assets"]]}
+         {System, :cmd, ["npx", ~w(vite dev), [cd: "assets"]]}
          """)}
       )
       |> Igniter.Project.TaskAliases.modify_existing_alias("assets.setup", fn zipper ->

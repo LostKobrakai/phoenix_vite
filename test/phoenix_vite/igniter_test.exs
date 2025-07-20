@@ -9,6 +9,7 @@ defmodule PhoenixVite.IgniterTest do
       |> ViteIgniter.create_vite_config()
       |> assert_creates("assets/vite.config.mjs", """
       import { defineConfig } from 'vite'
+      import { phoenixVitePlugin } from 'phoenix_vite'
       import tailwindcss from "@tailwindcss/vite";
 
       export default defineConfig({
@@ -29,7 +30,10 @@ defmodule PhoenixVite.IgniterTest do
           outDir: "../priv/static",
           emptyOutDir: true,
         },
-        plugins: [tailwindcss()]
+        plugins: [
+          tailwindcss(),
+          phoenixVitePlugin()
+        ]
       });
       """)
     end
@@ -53,7 +57,7 @@ defmodule PhoenixVite.IgniterTest do
       |> ViteIgniter.update_generator_static_assets(TestWeb)
       |> assert_has_patch("lib/test_web/components/layouts.ex", """
       37     - |          <img src={~p"/images/logo.svg"} width="36" />
-          37 + |          <img src={static_url(~p"/images/logo.svg")} width="36" />
+          37 + |          <img src={static_url(@conn, ~p"/images/logo.svg")} width="36" />
       """)
     end
   end
@@ -73,6 +77,16 @@ defmodule PhoenixVite.IgniterTest do
       |> ViteIgniter.use_only_vite_assets_caching(:test, TestWeb.Endpoint)
       |> assert_has_patch("config/runtime.exs", """
       52 + |    cache_static_manifest_latest: PhoenixVite.cache_static_manifest_latest(:test)
+      """)
+    end
+  end
+
+  describe "use_only_vite_reloading_for_assets/3" do
+    test "removes assets patterns config from dev.exs" do
+      phx_test_project()
+      |> ViteIgniter.use_only_vite_reloading_for_assets(:test, TestWeb.Endpoint)
+      |> assert_has_patch("config/dev.exs", """
+      60    - |      ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
       """)
     end
   end
@@ -202,19 +216,17 @@ defmodule PhoenixVite.IgniterTest do
       |> ViteIgniter.adjust_js_dependency_management()
       |> assert_creates("assets/package.json", """
       {
-        "workspaces": [
-          "../deps/*"
-        ],
         "dependencies": {
-          "phoenix": "workspace:*",
-          "phoenix_html": "workspace:*",
-          "phoenix_live_view": "workspace:*",
+          "phoenix": "file:../deps/phoenix",
+          "phoenix_html": "file:../deps/phoenix_html",
+          "phoenix_live_view": "file:../deps/phoenix_live_view",
           "topbar": "^3.0.0"
         },
         "devDependencies": {
-          "tailwindcss": "^4.1.0",
-          "daisyui": "^5.0.0",
           "@tailwindcss/vite": "^4.1.0",
+          "daisyui": "^5.0.0",
+          "phoenix_vite": "file:../deps/phoenix_vite",
+          "tailwindcss": "^4.1.0",
           "vite": "^6.3.0"
         }
       }
@@ -307,7 +319,7 @@ defmodule PhoenixVite.IgniterTest do
       phx_test_project()
       |> ViteIgniter.add_local_node(:test, TestWeb.Endpoint)
       |> assert_has_patch("config/dev.exs", """
-      20 + |    vite: {PhoenixVite, :run, ["npx", ~w(vite dev), [cd: "assets"]]}
+      20 + |    vite: {System, :cmd, ["npx", ~w(vite dev), [cd: "assets"]]}
       """)
     end
 

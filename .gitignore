@@ -21,3 +21,9 @@ phoenix_vite-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# NPM dependencies
+node_modules/
+
+# assets
+priv/static/*

@@ -17,12 +17,4 @@ defmodule PhoenixVite do
     |> PhoenixVite.Manifest.parse()
     |> PhoenixVite.Manifest.cache_static_manifest_latest()
   end
-
-  @doc """
-  Run commands wrapped, so they don't leak when phoenix closes the watcher port.
-  """
-  def run(cmd, args, opts) do
-    path = Application.app_dir(:phoenix_vite, "priv/wrapper.sh")
-    System.cmd(path, [cmd | args], opts)
-  end
 end

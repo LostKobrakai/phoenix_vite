@@ -7,6 +7,7 @@ defmodule Mix.Tasks.PhoenixVite.InstallTest do
     |> Igniter.compose_task("phoenix_vite.install", [])
     |> assert_creates("assets/vite.config.mjs", """
     import { defineConfig } from 'vite'
+    import { phoenixVitePlugin } from 'phoenix_vite'
     import tailwindcss from "@tailwindcss/vite";
 
     export default defineConfig({
@@ -27,7 +28,10 @@ defmodule Mix.Tasks.PhoenixVite.InstallTest do
         outDir: "../priv/static",
         emptyOutDir: true,
       },
-      plugins: [tailwindcss()]
+      plugins: [
+        tailwindcss(),
+        phoenixVitePlugin()
+      ]
     });
     """)
   end
