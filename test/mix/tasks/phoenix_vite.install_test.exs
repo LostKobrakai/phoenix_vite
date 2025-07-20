@@ -26,7 +26,9 @@ defmodule Mix.Tasks.PhoenixVite.InstallTest do
       },
       plugins: [
         tailwindcss(),
-        phoenixVitePlugin()
+        phoenixVitePlugin({
+          pattern: /\\.(ex|heex)$/
+        })
       ]
     });
     """)

@@ -28,7 +28,9 @@ defmodule PhoenixVite.IgniterTest do
         },
         plugins: [
           tailwindcss(),
-          phoenixVitePlugin()
+          phoenixVitePlugin({
+            pattern: /\\.(ex|heex)$/
+          })
         ]
       });
       """)
