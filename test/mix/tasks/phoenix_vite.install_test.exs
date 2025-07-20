@@ -15,6 +15,10 @@ defmodule Mix.Tasks.PhoenixVite.InstallTest do
         strictPort: true,
         cors: { origin: "http://localhost:4000" },
       },
+      optimizeDeps: {
+        // https://vitejs.dev/guide/dep-pre-bundling#monorepos-and-linked-dependencies
+        include: ["phoenix", "phoenix_html", "phoenix_live_view"],
+      },
       build: {
         manifest: true,
         rollupOptions: {
