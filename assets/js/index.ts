@@ -25,7 +25,11 @@ export function phoenixVitePlugin(opts: PluginOptions = {}): Plugin {
     name: "phoenix-vite",
     handleHotUpdate({ file, modules }) {
       if (!opts.pattern || !file.match(opts.pattern)) return;
-      return [...modules].flatMap((mod) => [...mod.importers]);
+      // replace current file module with importers, keep the rest
+      return [...modules].flatMap((mod) => {
+        if (mod.file == file) return [...mod.importers];
+        return [mod];
+      });
     },
     configureServer(_server: any) {
       // make vite correctly detect stdin being closed
