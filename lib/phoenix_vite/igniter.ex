@@ -32,7 +32,9 @@ if Code.ensure_loaded?(Igniter) do
         },
         plugins: [
           tailwindcss(),
-          phoenixVitePlugin()
+          phoenixVitePlugin({
+            pattern: /\\.(ex|heex)$/
+          })
         ]
       });
       """)
