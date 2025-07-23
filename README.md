@@ -31,7 +31,7 @@ by adding `phoenix_vite` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:phoenix_vite, "~> 0.2"}
+    {:phoenix_vite, "~> 0.2.0"}
   ]
 end
 ```
