@@ -18,7 +18,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-24.04
-    name: Test on OTP ${{matrix.pair.otp}} / Elixir ${{matrix.pair.elixir}}
+    name: Test on OTP ${{matrix.pair.otp}} / Elixir ${{matrix.pair.elixir}} / phx_new ${{matrix.phx_new}}
     strategy:
       fail-fast: false
       matrix:
@@ -26,10 +26,16 @@ jobs:
           - pair:
               elixir: "1.18.4-otp-26"
               otp: "26.2.5.13"
+            phx_new: "1.8.0-rc.3"
           - pair:
               elixir: "1.18.4-otp-27"
               otp: "27.3.4.1"
+            phx_new: "1.8.0-rc.3"
             lint: lint
+          - pair:
+              elixir: "1.18.4-otp-27"
+              otp: "27.3.4.1"
+            phx_new: "1.7.21"
     steps:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
@@ -69,7 +75,7 @@ jobs:
         run: mix deps.get --check-locked
 
       - name: Install test dependency
-        run: mix archive.install hex phx_new 1.8.0-rc.3 --force
+        run: mix archive.install hex phx_new ${{matrix.phx_new}} --force
 
       - name: Run a bunch of useful elixir level checks
         run: mix checks
