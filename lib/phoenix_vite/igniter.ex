@@ -389,20 +389,32 @@ if Code.ensure_loaded?(Igniter) do
     def add_local_node(igniter, app_name, endpoint) do
       igniter
       |> Igniter.Project.Config.configure(
+        "config.exs",
+        :phoenix_vite,
+        [PhoenixVite.Npm, :assets],
+        {:code, Sourceror.parse_string!(~s|[args: [], cd: Path.expand("../assets", __DIR__)]|)}
+      )
+      |> Igniter.Project.Config.configure(
+        "config.exs",
+        :phoenix_vite,
+        [PhoenixVite.Npm, :vite],
+        {:code,
+         Sourceror.parse_string!(
+           ~s|[args: ~w(exec -- vite), cd: Path.expand("../assets", __DIR__), env: %{"MIX_BUILD_PATH" => Mix.Project.build_path()}]|
+         )}
+      )
+      |> Igniter.Project.Config.configure(
         "dev.exs",
         app_name,
         [endpoint, :watchers, :vite],
-        {:code,
-         Sourceror.parse_string!("""
-         {System, :cmd, ["npx", ~w(vite dev), [cd: "assets"]]}
-         """)}
+        {:code, Sourceror.parse_string!(~s|{PhoenixVite.Npm, :run, [:vite, ~w(dev)]}|)}
       )
       |> Igniter.Project.TaskAliases.modify_existing_alias("assets.setup", fn zipper ->
-        alias = Sourceror.parse_string!(~s|["cmd --cd assets npm install"]|)
+        alias = Sourceror.parse_string!(~s|["phoenix_vite.npm assets install"]|)
         {:ok, Igniter.Code.Common.replace_code(zipper, alias)}
       end)
       |> Igniter.Project.TaskAliases.modify_existing_alias("assets.build", fn zipper ->
-        alias = Sourceror.parse_string!(~s|["cmd --cd assets npx vite build"]|)
+        alias = Sourceror.parse_string!(~s|["phoenix_vite.npm vite build"]|)
         {:ok, Igniter.Code.Common.replace_code(zipper, alias)}
       end)
       |> Igniter.Project.TaskAliases.modify_existing_alias("assets.deploy", fn zipper ->
