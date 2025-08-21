@@ -344,6 +344,20 @@ defmodule PhoenixVite.IgniterTest do
   end
 
   describe "add_local_node/3" do
+    test "configures profiles" do
+      phx_test_project()
+      |> ViteIgniter.add_local_node(:test, TestWeb.Endpoint)
+      |> assert_has_patch("config/config.exs", """
+      10 + |config :phoenix_vite, PhoenixVite.Npm,
+      11 + |  assets: [args: [], cd: Path.expand("../assets", __DIR__)],
+      12 + |  vite: [
+      13 + |    args: ~w(exec -- vite),
+      14 + |    cd: Path.expand("../assets", __DIR__),
+      15 + |    env: %{"MIX_BUILD_PATH" => Mix.Project.build_path()}
+      16 + |  ]
+      """)
+    end
+
     test "configures endpoint watcher" do
       phx_test_project()
       |> ViteIgniter.add_local_node(:test, TestWeb.Endpoint)
