@@ -20,18 +20,18 @@ defmodule Mix.Tasks.PhoenixVite.Npm do
 
     Application.ensure_all_started(:phoenix_vite)
 
-    Mix.Task.reenable("phoenix_vite.node")
+    Mix.Task.reenable("phoenix_vite.npm")
     run_cmd(remaining_args)
   end
 
   defp run_cmd([profile | args] = all) do
     case PhoenixVite.Npm.run(String.to_atom(profile), args) do
       0 -> :ok
-      status -> Mix.raise("`mix phoenix_vite.node #{Enum.join(all, " ")}` exited with #{status}")
+      status -> Mix.raise("`mix phoenix_vite.npm #{Enum.join(all, " ")}` exited with #{status}")
     end
   end
 
   defp run_cmd([]) do
-    Mix.raise("`mix phoenix_vite.node` expects the profile as argument")
+    Mix.raise("`mix phoenix_vite.npm` expects the profile as argument")
   end
 end
