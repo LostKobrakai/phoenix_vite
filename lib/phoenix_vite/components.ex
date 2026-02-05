@@ -121,7 +121,6 @@ defmodule PhoenixVite.Components do
       file={chunk.file}
       rel="modulepreload"
       to_url={@to_url}
-      cache
     />
     """
   end
