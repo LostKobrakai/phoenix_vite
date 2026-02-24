@@ -133,7 +133,7 @@ defmodule PhoenixVite.Components do
   defp reference_for_file(assigns) do
     ~H"""
     <script
-      :if={Path.extname(@file) == ".js"}
+      :if={Path.extname(@file) in [".js", ".ts", ".jsx", ".tsx"]}
       phx-track-static
       type="module"
       src={@to_url.(cache_enabled_path(@file, @cache))}
