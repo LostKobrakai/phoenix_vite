@@ -47,6 +47,7 @@ defmodule PhoenixVite.Components do
   attr :names, :list, required: true
   attr :manifest, :any, required: true
   attr :to_url, {:fun, 1}, default: &Function.identity/1
+  attr :is_react?, :boolean, default: false
   attr :dev_server, :boolean, default: false
 
   def assets(%{dev_server: true} = assigns) do
@@ -62,10 +63,18 @@ defmodule PhoenixVite.Components do
   """
   attr :names, :list, required: true
   attr :to_url, {:fun, 1}, default: &Function.identity/1
+  attr :is_react?, :boolean, default: false
 
   # https://vite.dev/guide/backend-integration.html
   def assets_from_dev_server(assigns) do
     ~H"""
+    <script :if={@is_react?} type="module">
+      import RefreshRuntime from '<%= @to_url.("/@react-refresh") %>'
+      RefreshRuntime.injectIntoGlobalHook(window)
+      window.$RefreshReg$ = () => {}
+      window.$RefreshSig$ = () => (type) => type
+      window.__vite_plugin_react_preamble_installed__ = true
+    </script>
     <script phx-track-static type="module" src={@to_url.("/@vite/client")}>
     </script>
     <.reference_for_file :for={name <- @names} file={name} to_url={@to_url} />
@@ -95,6 +104,7 @@ defmodule PhoenixVite.Components do
     />
     """
   end
+
 
   attr :name, :string, required: true
   attr :manifest, :map, required: true
@@ -128,12 +138,23 @@ defmodule PhoenixVite.Components do
   attr :file, :string, required: true
   attr :to_url, {:fun, 1}, required: true
   attr :cache, :boolean, default: false
+  attr :rel, :string, default: nil
   attr :rest, :global
 
   defp reference_for_file(assigns) do
+    js_extensions = [".js", ".jsx", ".mjs", ".mts", ".ts", ".tsx"]
+    assigns = assign(assigns, is_js: Path.extname(assigns.file) in js_extensions)
+
     ~H"""
+    <link
+      :if={@is_js && @rel == "modulepreload"}
+      phx-track-static
+      rel="modulepreload"
+      href={@to_url.(cache_enabled_path(@file, @cache))}
+      {@rest}
+    />
     <script
-      :if={Path.extname(@file) == ".js"}
+      :if={@is_js && @rel != "modulepreload"}
       phx-track-static
       type="module"
       src={@to_url.(cache_enabled_path(@file, @cache))}
@@ -151,7 +172,13 @@ defmodule PhoenixVite.Components do
   end
 
   defp cache_enabled_path(path, true) do
-    "/" |> Path.join(path) |> URI.parse() |> URI.append_query("vsn=d") |> URI.to_string()
+    base = "/" |> Path.join(path) |> URI.parse()
+
+    if Path.extname(path) in [".js", ".mjs"] do
+      URI.to_string(base)
+    else
+      base |> URI.append_query("vsn=d") |> URI.to_string()
+    end
   end
 
   defp cache_enabled_path(path, false) do
