@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-03-06
+
+- Support ts/tsx/jsx referenced files [[#24](https://github.com/LostKobrakai/phoenix_vite/issues/24)]
+- Allow setting crossorigin attributes for generated links/scripts
+
 ## [0.4.1] - 2026-02-19
 
 - Remove url cache parameter from chunks [[#22](https://github.com/LostKobrakai/phoenix_vite/issues/22)]
@@ -60,7 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integration with bun elixir package
 - Igniter installer
 
-[unreleased]: https://github.com/LostKobrakai/phoenix_vite/compare/v0.4.1...HEAD
+[unreleased]: https://github.com/LostKobrakai/phoenix_vite/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/LostKobrakai/phoenix_vite/releases/tag/v0.4.2
 [0.4.1]: https://github.com/LostKobrakai/phoenix_vite/releases/tag/v0.4.1
 [0.4.0]: https://github.com/LostKobrakai/phoenix_vite/releases/tag/v0.4.0
 [0.3.3]: https://github.com/LostKobrakai/phoenix_vite/releases/tag/v0.3.3
