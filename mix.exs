@@ -39,6 +39,7 @@ defmodule PhoenixVite.MixProject do
     colored_mix = "elixir --erl \"-elixir\\ ansi_enabled\\ true\" -S mix"
 
     [
+      "hex.publish": ["cmd npm run build", "hex.publish"],
       checks: [
         "cmd #{colored_mix} deps.unlock --check-unused",
         "cmd #{colored_mix} xref graph --format cycles --label compile-connected --fail-above 0",
