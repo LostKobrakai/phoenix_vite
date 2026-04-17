@@ -294,9 +294,6 @@ if Code.ensure_loaded?(Igniter) do
       end)
     end
 
-    @doc """
-    Use package.json to pull in dependencies
-    """
     def adjust_js_dependency_management(igniter) do
       tailwind = has_tailwind?(igniter)
 
@@ -368,7 +365,23 @@ if Code.ensure_loaded?(Igniter) do
       end)
     end
 
-    defp has_tailwind?(igniter), do: Igniter.exists?(igniter, "assets/css/app.css")
+    defp has_tailwind?(igniter) do
+      Igniter.exists?(igniter, "assets/css/app.css") and
+        case Rewrite.source(igniter.rewrite, "assets/css/app.css") do
+          {:ok, source} ->
+            tailwind_css?(Rewrite.Source.get(source, :content))
+
+          :error ->
+            case File.read("assets/css/app.css") do
+              {:ok, content} -> tailwind_css?(content)
+              _ -> false
+            end
+        end
+    end
+
+    defp tailwind_css?(content) do
+      String.contains?(content, "tailwindcss") or String.contains?(content, "@tailwind")
+    end
 
     @doc """
     Add :bun dependency to project integrated with vite

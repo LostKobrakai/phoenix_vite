@@ -46,9 +46,11 @@ defmodule Mix.Tasks.PhoenixVite.InstallTest do
     """)
   end
 
-  test "creates vite.config.mjs without tailwind when app.css does not exist" do
+  test "creates vite.config.mjs without tailwind when app.css has no tailwind content" do
     phx_test_project()
-    |> Igniter.rm("assets/css/app.css")
+    |> Igniter.create_or_update_file("assets/css/app.css", "body { margin: 0; }", fn source ->
+      Rewrite.Source.update(source, :content, fn _ -> "body { margin: 0; }" end)
+    end)
     |> Igniter.compose_task("phoenix_vite.install", [])
     |> assert_creates("assets/vite.config.mjs", """
     import { defineConfig } from 'vite'
