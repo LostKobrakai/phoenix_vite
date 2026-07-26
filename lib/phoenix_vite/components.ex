@@ -146,7 +146,7 @@ defmodule PhoenixVite.Components do
   attr :to_url, {:fun, 1}, required: true
   attr :cache, :boolean, default: false
   attr :crossorigin, :any, default: false
-  attr :rest, :global
+  attr :rest, :global, include: ~w(rel)
 
   defp reference_for_file(assigns) do
     ~H"""
