@@ -19,6 +19,7 @@ defmodule PhoenixVite.Components do
         manifest={{:my_app, "priv/static/.vite/manifest.json"}}
         dev_server={PhoenixVite.Components.has_vite_watcher?(MyAppWeb.Endpoint)}
         to_url={fn p -> static_url(@conn, p) end}
+        script_attrs={%{nonce: @csp_nonce}}
       />
 
   This also requires having the static_url configured for the endpoint.
@@ -49,6 +50,7 @@ defmodule PhoenixVite.Components do
   attr :to_url, {:fun, 1}, default: &Function.identity/1
   attr :dev_server, :boolean, default: false
   attr :crossorigin, :any, default: false
+  attr :script_attrs, :map, default: %{}
 
   def assets(%{dev_server: true} = assigns) do
     assets_from_dev_server(assigns)
@@ -64,17 +66,25 @@ defmodule PhoenixVite.Components do
   attr :names, :list, required: true
   attr :to_url, {:fun, 1}, default: &Function.identity/1
   attr :crossorigin, :any, default: false
+  attr :script_attrs, :map, default: %{}
 
   # https://vite.dev/guide/backend-integration.html
   def assets_from_dev_server(assigns) do
     ~H"""
-    <script phx-track-static crossorigin={@crossorigin} type="module" src={@to_url.("/@vite/client")}>
+    <script
+      phx-track-static
+      crossorigin={@crossorigin}
+      type="module"
+      src={@to_url.("/@vite/client")}
+      {@script_attrs}
+    >
     </script>
     <.reference_for_file
       :for={name <- @names}
       file={name}
       to_url={@to_url}
       crossorigin={@crossorigin}
+      script_attrs={@script_attrs}
     />
     """
   end
@@ -88,6 +98,7 @@ defmodule PhoenixVite.Components do
   attr :manifest, :any, required: true
   attr :to_url, {:fun, 1}, default: &Function.identity/1
   attr :crossorigin, :any, default: false
+  attr :script_attrs, :map, default: %{}
 
   # https://vite.dev/guide/backend-integration.html
   def assets_from_manifest(%{manifest: manifest} = assigns) do
@@ -101,6 +112,7 @@ defmodule PhoenixVite.Components do
       manifest={@manifest}
       to_url={@to_url}
       crossorigin={@crossorigin}
+      script_attrs={@script_attrs}
     />
     """
   end
@@ -109,6 +121,7 @@ defmodule PhoenixVite.Components do
   attr :manifest, :map, required: true
   attr :to_url, {:fun, 1}, default: &Function.identity/1
   attr :crossorigin, :any, default: false
+  attr :script_attrs, :map, default: %{}
 
   # https://vite.dev/guide/backend-integration.html
   defp assets_from_manifest_for_name(%{manifest: manifest, name: name} = assigns) do
@@ -126,18 +139,32 @@ defmodule PhoenixVite.Components do
       file={css}
       to_url={@to_url}
       crossorigin={@crossorigin}
+      script_attrs={@script_attrs}
       cache
     />
     <%= for chunk <- @imported_chunks, css <- chunk.css do %>
-      <.reference_for_file file={css} to_url={@to_url} crossorigin={@crossorigin} cache />
+      <.reference_for_file
+        file={css}
+        to_url={@to_url}
+        crossorigin={@crossorigin}
+        script_attrs={@script_attrs}
+        cache
+      />
     <% end %>
-    <.reference_for_file file={@chunk.file} to_url={@to_url} crossorigin={@crossorigin} cache />
+    <.reference_for_file
+      file={@chunk.file}
+      to_url={@to_url}
+      crossorigin={@crossorigin}
+      script_attrs={@script_attrs}
+      cache
+    />
     <.reference_for_file
       :for={chunk <- @imported_chunks}
       file={chunk.file}
       rel="modulepreload"
       to_url={@to_url}
       crossorigin={@crossorigin}
+      script_attrs={@script_attrs}
     />
     """
   end
@@ -146,6 +173,7 @@ defmodule PhoenixVite.Components do
   attr :to_url, {:fun, 1}, required: true
   attr :cache, :boolean, default: false
   attr :crossorigin, :any, default: false
+  attr :script_attrs, :map, default: %{}
   attr :rest, :global, include: ~w(rel)
 
   defp reference_for_file(assigns) do
@@ -156,6 +184,7 @@ defmodule PhoenixVite.Components do
       type="module"
       crossorigin={@crossorigin}
       src={@to_url.(cache_enabled_path(@file, @cache))}
+      {@script_attrs}
       {@rest}
     >
     </script>

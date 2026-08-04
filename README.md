@@ -31,13 +31,25 @@ by adding `phoenix_vite` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:phoenix_vite, "~> 0.3.0"}
+    {:phoenix_vite, "~> 0.5"}
   ]
 end
 ```
 
 ```sh
 mix phoenix_vite.install [--bun]
+```
+
+Pass per-request attributes such as a Content Security Policy nonce through
+`script_attrs`:
+
+```heex
+<PhoenixVite.Components.assets
+  names={["js/app.js", "css/app.css"]}
+  manifest={{:my_app, "priv/static/.vite/manifest.json"}}
+  dev_server={PhoenixVite.Components.has_vite_watcher?(MyAppWeb.Endpoint)}
+  script_attrs={%{nonce: @csp_nonce}}
+/>
 ```
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
