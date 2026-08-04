@@ -53,12 +53,10 @@ defmodule PhoenixVite.Components do
   attr :script_attrs, :map, default: %{}
 
   def assets(%{dev_server: true} = assigns) do
-    validate_script_attrs!(assigns.script_attrs)
     assets_from_dev_server(assigns)
   end
 
   def assets(%{dev_server: false} = assigns) do
-    validate_script_attrs!(assigns.script_attrs)
     assets_from_manifest(assigns)
   end
 
@@ -72,6 +70,8 @@ defmodule PhoenixVite.Components do
 
   # https://vite.dev/guide/backend-integration.html
   def assets_from_dev_server(assigns) do
+    validate_script_attrs!(assigns.script_attrs)
+
     ~H"""
     <script
       phx-track-static
@@ -104,6 +104,8 @@ defmodule PhoenixVite.Components do
 
   # https://vite.dev/guide/backend-integration.html
   def assets_from_manifest(%{manifest: manifest} = assigns) do
+    validate_script_attrs!(assigns.script_attrs)
+
     manifest = cached_manifest(manifest)
     assigns = assign(assigns, manifest: cached_manifest(manifest))
 
@@ -227,8 +229,8 @@ defmodule PhoenixVite.Components do
 
   defp validate_script_attrs!(attrs) do
     reserved = [
+      :"phx-track-static",
       :crossorigin,
-      :phx_track_static,
       :src,
       :type,
       "crossorigin",

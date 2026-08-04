@@ -57,5 +57,20 @@ defmodule PhoenixVite.ComponentsTest do
         script_attrs: %{"type" => "text/plain", src: "https://example.com/other.js"}
       })
     end
+
+    assert_raise ArgumentError, ~r/script_attrs cannot override/, fn ->
+      render_component(&Components.assets_from_dev_server/1, %{
+        names: ["js/app.tsx"],
+        script_attrs: %{:"phx-track-static" => false}
+      })
+    end
+
+    assert_raise ArgumentError, ~r/script_attrs cannot override/, fn ->
+      render_component(&Components.assets_from_manifest/1, %{
+        names: ["js/app.tsx"],
+        manifest: %{},
+        script_attrs: %{"crossorigin" => "anonymous"}
+      })
+    end
   end
 end
