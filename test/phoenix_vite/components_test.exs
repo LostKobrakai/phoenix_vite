@@ -43,7 +43,8 @@ defmodule PhoenixVite.ComponentsTest do
 
     assert length(Regex.scan(~r/nonce="request-nonce"/, html)) == 2
     assert html =~ ~s(src="/assets/app.js?vsn=d")
-    assert html =~ ~s(src="/assets/shared.js")
-    refute html =~ ~r/<link[^>]+nonce="request-nonce"/
+    assert html =~ ~r/<link[^>]+rel="modulepreload"[^>]+href="\/assets\/shared\.js"/
+    assert length(Regex.scan(~r/<script/, html)) == 1
+    refute html =~ ~r/<link[^>]+rel="stylesheet"[^>]+nonce="request-nonce"/
   end
 end

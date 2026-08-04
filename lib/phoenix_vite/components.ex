@@ -158,10 +158,9 @@ defmodule PhoenixVite.Components do
       script_attrs={@script_attrs}
       cache
     />
-    <.reference_for_file
+    <.modulepreload_for_file
       :for={chunk <- @imported_chunks}
       file={chunk.file}
-      rel="modulepreload"
       to_url={@to_url}
       crossorigin={@crossorigin}
       script_attrs={@script_attrs}
@@ -195,6 +194,23 @@ defmodule PhoenixVite.Components do
       crossorigin={@crossorigin}
       href={@to_url.(cache_enabled_path(@file, @cache))}
       {@rest}
+    />
+    """
+  end
+
+  attr :file, :string, required: true
+  attr :to_url, {:fun, 1}, required: true
+  attr :crossorigin, :any, default: false
+  attr :script_attrs, :map, default: %{}
+
+  defp modulepreload_for_file(assigns) do
+    ~H"""
+    <link
+      phx-track-static
+      rel="modulepreload"
+      crossorigin={@crossorigin}
+      href={@to_url.(cache_enabled_path(@file, false))}
+      nonce={Map.get(@script_attrs, :nonce)}
     />
     """
   end
