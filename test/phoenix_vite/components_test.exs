@@ -47,4 +47,15 @@ defmodule PhoenixVite.ComponentsTest do
     assert length(Regex.scan(~r/<script/, html)) == 1
     refute html =~ ~r/<link[^>]+rel="stylesheet"[^>]+nonce="request-nonce"/
   end
+
+  test "rejects component-owned script attributes" do
+    assert_raise ArgumentError, ~r/script_attrs cannot override/, fn ->
+      render_component(&Components.assets/1, %{
+        names: ["js/app.tsx"],
+        manifest: %{},
+        dev_server: true,
+        script_attrs: %{"type" => "text/plain", src: "https://example.com/other.js"}
+      })
+    end
+  end
 end

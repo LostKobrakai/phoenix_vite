@@ -53,10 +53,12 @@ defmodule PhoenixVite.Components do
   attr :script_attrs, :map, default: %{}
 
   def assets(%{dev_server: true} = assigns) do
+    validate_script_attrs!(assigns.script_attrs)
     assets_from_dev_server(assigns)
   end
 
   def assets(%{dev_server: false} = assigns) do
+    validate_script_attrs!(assigns.script_attrs)
     assets_from_manifest(assigns)
   end
 
@@ -221,6 +223,28 @@ defmodule PhoenixVite.Components do
 
   defp cache_enabled_path(path, false) do
     "/" |> Path.join(path) |> URI.parse() |> URI.to_string()
+  end
+
+  defp validate_script_attrs!(attrs) do
+    reserved = [
+      :crossorigin,
+      :phx_track_static,
+      :src,
+      :type,
+      "crossorigin",
+      "phx-track-static",
+      "src",
+      "type"
+    ]
+
+    case Enum.filter(reserved, &Map.has_key?(attrs, &1)) do
+      [] ->
+        :ok
+
+      keys ->
+        raise ArgumentError,
+              "script_attrs cannot override component-owned attributes: #{inspect(keys)}"
+    end
   end
 
   defp cached_manifest(%{} = manifest) do
