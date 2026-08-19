@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Fix installer failure when `assets/css/app.css` exists outside Igniter's loaded rewrite sources
+
 ## [0.5.0] - 2026-07-27
 
 - Fix heex warning for using rel attribute with `:global` [[#27](https://github.com/LostKobrakai/phoenix_vite/pull/27)]

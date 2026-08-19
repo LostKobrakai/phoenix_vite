@@ -346,9 +346,12 @@ if Code.ensure_loaded?(Igniter) do
     end
 
     defp has_tailwind?(igniter) do
-      if Igniter.exists?(igniter, "assets/css/app.css") do
-        {:ok, source} = Rewrite.source(igniter.rewrite, "assets/css/app.css")
-        tailwind_css?(Rewrite.Source.get(source, :content))
+      path = "assets/css/app.css"
+      igniter = Igniter.include_existing_file(igniter, path)
+
+      case Rewrite.source(igniter.rewrite, path) do
+        {:ok, source} -> tailwind_css?(Rewrite.Source.get(source, :content))
+        {:error, _error} -> false
       end
     end
 

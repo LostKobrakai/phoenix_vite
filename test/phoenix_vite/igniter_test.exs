@@ -47,6 +47,21 @@ defmodule PhoenixVite.IgniterTest do
       });
       """)
     end
+
+    test "loads app.css when it exists outside of the rewrite sources" do
+      path = "assets/css/app.css"
+      igniter = phx_test_project()
+
+      assert Igniter.exists?(igniter, path)
+      igniter = %{igniter | rewrite: Rewrite.delete(igniter.rewrite, path)}
+      refute Rewrite.has_source?(igniter.rewrite, path)
+
+      igniter = ViteIgniter.create_vite_config(igniter)
+      {:ok, source} = Rewrite.source(igniter.rewrite, "assets/vite.config.mjs")
+
+      assert Rewrite.Source.get(source, :content) =~
+               ~s(import tailwindcss from "@tailwindcss/vite")
+    end
   end
 
   describe "configure_dev_server_static_url_for_development/3" do
