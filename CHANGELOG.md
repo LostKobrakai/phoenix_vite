@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Fix installer failure when `assets/css/app.css` exists outside Igniter's loaded rewrite sources
+## [0.5.1] - 2026-08-19
+
+- Fix installer failure when `assets/css/app.css` exists outside Igniter's loaded rewrite sources [[#29](https://github.com/LostKobrakai/phoenix_vite/pull/29)]
 
 ## [0.5.0] - 2026-07-27
 
@@ -77,7 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integration with bun elixir package
 - Igniter installer
 
-[unreleased]: https://github.com/LostKobrakai/phoenix_vite/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/LostKobrakai/phoenix_vite/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/LostKobrakai/phoenix_vite/releases/tag/v0.5.1
 [0.5.0]: https://github.com/LostKobrakai/phoenix_vite/releases/tag/v0.5.0
 [0.4.3]: https://github.com/LostKobrakai/phoenix_vite/releases/tag/v0.4.3
 [0.4.2]: https://github.com/LostKobrakai/phoenix_vite/releases/tag/v0.4.2
