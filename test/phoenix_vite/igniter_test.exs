@@ -106,6 +106,97 @@ defmodule PhoenixVite.IgniterTest do
     end
   end
 
+  describe "split_plug_static_for_caching/4" do
+    test "splits static caching into a vite assets plug and a plain plug" do
+      igniter = phx_test_project()
+
+      {:ok, web_source} = Rewrite.source(igniter.rewrite, "lib/test_web.ex")
+
+      assert Rewrite.Source.get(web_source, :content) =~
+               "~w(assets fonts images favicon.ico robots.txt)"
+
+      {:ok, endpoint_source} = Rewrite.source(igniter.rewrite, "lib/test_web/endpoint.ex")
+      refute Rewrite.Source.get(endpoint_source, :content) =~ "cache_control_for_etags"
+
+      igniter
+      |> ViteIgniter.split_plug_static_for_caching(:test, TestWeb, TestWeb.Endpoint)
+      |> assert_has_patch("lib/test_web/endpoint.ex", """
+      + |  plug Plug.Static,
+      + |    at: "/",
+      + |    from: :test,
+      + |    gzip: not code_reloading?,
+      + |    only: ["assets"],
+      + |    cache_control_for_etags: "public, max-age=31536000, immutable"
+      + |
+      """)
+      |> assert_has_patch("lib/test_web.ex", """
+      - |  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
+      + |  # assets/ is served separately, by a dedicated Plug.Static plug
+      + |  def static_paths, do: ~w(fonts images favicon.ico robots.txt)
+      """)
+    end
+
+    test "removes only \"assets\" from an already customized static_paths list" do
+      igniter =
+        phx_test_project()
+        |> Igniter.update_file("lib/test_web.ex", fn source ->
+          Rewrite.Source.update(source, :content, fn content ->
+            String.replace(
+              content,
+              "~w(assets fonts images favicon.ico robots.txt)",
+              "~w(assets fonts images favicon.ico robots.txt uploads)"
+            )
+          end)
+        end)
+        |> ViteIgniter.split_plug_static_for_caching(:test, TestWeb, TestWeb.Endpoint)
+
+      {:ok, source} = Rewrite.source(igniter.rewrite, "lib/test_web.ex")
+
+      assert Rewrite.Source.get(source, :content) =~
+               "~w(fonts images favicon.ico robots.txt uploads)"
+    end
+
+    test "removes only \"assets\" when static_paths/0 is a plain list literal" do
+      igniter =
+        phx_test_project()
+        |> Igniter.update_file("lib/test_web.ex", fn source ->
+          Rewrite.Source.update(source, :content, fn content ->
+            String.replace(
+              content,
+              "def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)",
+              ~s|def static_paths, do: ["assets", "fonts", "images", "favicon.ico", "robots.txt"]|
+            )
+          end)
+        end)
+        |> ViteIgniter.split_plug_static_for_caching(:test, TestWeb, TestWeb.Endpoint)
+
+      {:ok, source} = Rewrite.source(igniter.rewrite, "lib/test_web.ex")
+
+      assert Rewrite.Source.get(source, :content) =~
+               ~s|def static_paths, do: ["fonts", "images", "favicon.ico", "robots.txt"]|
+    end
+
+    test "leaves a static_paths/0 not shaped like a sigil or list literal untouched" do
+      igniter =
+        phx_test_project()
+        |> Igniter.update_file("lib/test_web.ex", fn source ->
+          Rewrite.Source.update(source, :content, fn content ->
+            String.replace(
+              content,
+              "def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)",
+              "def static_paths, do: Application.fetch_env!(:test, :static_paths)"
+            )
+          end)
+        end)
+        |> ViteIgniter.split_plug_static_for_caching(:test, TestWeb, TestWeb.Endpoint)
+
+      {:ok, source} = Rewrite.source(igniter.rewrite, "lib/test_web.ex")
+
+      assert Rewrite.Source.get(source, :content) =~
+               "def static_paths, do: Application.fetch_env!(:test, :static_paths)"
+    end
+  end
+
   describe "use_only_vite_reloading_for_assets/3" do
     test "removes assets patterns config from runtime.exs" do
       phx_test_project()

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Fix entry chunk being evaluated twice by dropping the use of `?vsn=d` cache parameter [[#30](https://github.com/LostKobrakai/phoenix_vite/issues/30)]
+
 ## [0.5.1] - 2026-08-19
 
 - Fix installer failure when `assets/css/app.css` exists outside Igniter's loaded rewrite sources [[#29](https://github.com/LostKobrakai/phoenix_vite/pull/29)]

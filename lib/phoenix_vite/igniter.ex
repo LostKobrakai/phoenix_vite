@@ -120,6 +120,104 @@ if Code.ensure_loaded?(Igniter) do
     end
 
     @doc """
+    Split static asset serving into two `Plug.Static` plugs.
+
+    Vite content-hashes everything under `assets/`, so those files can be
+    cached long-term by filename alone. Files vite copies verbatim from its
+    public directory (favicon, robots.txt, ...) are not hashed an their handling
+    must not be changed.
+    """
+    def split_plug_static_for_caching(igniter, app_name, web_module, endpoint) do
+      igniter
+      |> remove_assets_from_static_paths(web_module)
+      |> Igniter.Project.Module.find_and_update_module!(endpoint, fn zipper ->
+        with {:ok, zipper} <- find_plug_static(zipper) do
+          {:ok,
+           Igniter.Code.Common.add_code(
+             zipper,
+             """
+             plug Plug.Static,
+               at: "/",
+               from: #{inspect(app_name)},
+               gzip: not code_reloading?,
+               only: ["assets"],
+               cache_control_for_etags: "public, max-age=31536000, immutable"
+             """,
+             placement: :before
+           )}
+        end
+      end)
+    end
+
+    defp find_plug_static(zipper) do
+      Igniter.Code.Function.move_to_function_call_in_current_scope(zipper, :plug, 2, fn zipper ->
+        Igniter.Code.Function.argument_equals?(zipper, 0, Plug.Static)
+      end)
+    end
+
+    # Removes "assets" from `static_paths/0`'s list, whether it's the
+    # generator's `~w(...)` sigil or a plain list literal, so the plug
+    # already using it stops matching vite's hashed output on its own. Any
+    # other form (entries that aren't string literals, ...) is left untouched.
+    defp remove_assets_from_static_paths(igniter, web_module) do
+      Igniter.Project.Module.find_and_update_module!(igniter, web_module, fn zipper ->
+        with {:ok, zipper} <-
+               Igniter.Code.Function.move_to_def(zipper, :static_paths, 0, target: :at),
+             {:ok, zipper} <- add_code_comment_about_assets_missing(zipper),
+             {:ok, body_zipper} <- Igniter.Code.Common.move_to_do_block(zipper),
+             body_zipper = Igniter.Code.Common.maybe_move_to_single_child_block(body_zipper),
+             {:ok, zipper} <-
+               adjust_static_paths(body_zipper, Zipper.node(body_zipper), fn list ->
+                 Enum.reject(list, &(&1 == "assets"))
+               end) do
+          {:ok, zipper}
+        else
+          :error -> {:ok, zipper}
+        end
+      end)
+    end
+
+    defp add_code_comment_about_assets_missing(zipper) do
+      comment = "assets/ is served separately, by a dedicated Plug.Static plug"
+      {:ok, Igniter.Code.Common.add_comment(zipper, comment)}
+    end
+
+    defp adjust_static_paths(zipper, {:sigil_w, meta, [{:<<>>, meta2, [words]}, mods]}, callback)
+         when is_binary(words) and is_function(callback, 1) do
+      new_words = words |> String.split() |> callback.() |> Enum.join(" ")
+      new_sigil = {:sigil_w, meta, [{:<<>>, meta2, [new_words]}, mods]}
+      {:ok, Zipper.replace(zipper, new_sigil)}
+    end
+
+    defp adjust_static_paths(zipper, list, callback)
+         when is_list(list) and is_function(callback, 1) do
+      with {:ok, words} <- static_path_strings(list) do
+        original = Map.new(Enum.zip(words, list))
+
+        new_list =
+          words
+          |> callback.()
+          |> Enum.map(&Map.get(original, &1, {:__block__, [], [&1]}))
+
+        {:ok, Zipper.replace(zipper, new_list)}
+      end
+    end
+
+    defp adjust_static_paths(_, _, _) do
+      :error
+    end
+
+    defp static_path_strings(list) do
+      {:ok, Enum.map(list, &(static_path_string(&1) || throw(:error)))}
+    catch
+      :error -> :error
+    end
+
+    defp static_path_string({:__block__, _, [string]}) when is_binary(string), do: string
+    defp static_path_string(string) when is_binary(string), do: string
+    defp static_path_string(_), do: nil
+
+    @doc """
     Remove assets patterns from phoenix_live_reload
 
     Assets reloading is handled by the vite dev server, not phoenix_live_reload

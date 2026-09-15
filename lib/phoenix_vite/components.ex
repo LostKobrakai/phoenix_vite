@@ -126,12 +126,11 @@ defmodule PhoenixVite.Components do
       file={css}
       to_url={@to_url}
       crossorigin={@crossorigin}
-      cache
     />
     <%= for chunk <- @imported_chunks, css <- chunk.css do %>
-      <.reference_for_file file={css} to_url={@to_url} crossorigin={@crossorigin} cache />
+      <.reference_for_file file={css} to_url={@to_url} crossorigin={@crossorigin} />
     <% end %>
-    <.reference_for_file file={@chunk.file} to_url={@to_url} crossorigin={@crossorigin} cache />
+    <.reference_for_file file={@chunk.file} to_url={@to_url} crossorigin={@crossorigin} />
     <.reference_for_file
       :for={chunk <- @imported_chunks}
       file={chunk.file}
@@ -144,7 +143,6 @@ defmodule PhoenixVite.Components do
 
   attr :file, :string, required: true
   attr :to_url, {:fun, 1}, required: true
-  attr :cache, :boolean, default: false
   attr :crossorigin, :any, default: false
   attr :rest, :global, include: ~w(rel)
 
@@ -155,7 +153,7 @@ defmodule PhoenixVite.Components do
       phx-track-static
       type="module"
       crossorigin={@crossorigin}
-      src={@to_url.(cache_enabled_path(@file, @cache))}
+      src={@to_url.(Path.join("/", @file))}
       {@rest}
     >
     </script>
@@ -164,18 +162,10 @@ defmodule PhoenixVite.Components do
       phx-track-static
       rel="stylesheet"
       crossorigin={@crossorigin}
-      href={@to_url.(cache_enabled_path(@file, @cache))}
+      href={@to_url.(Path.join("/", @file))}
       {@rest}
     />
     """
-  end
-
-  defp cache_enabled_path(path, true) do
-    "/" |> Path.join(path) |> URI.parse() |> URI.append_query("vsn=d") |> URI.to_string()
-  end
-
-  defp cache_enabled_path(path, false) do
-    "/" |> Path.join(path) |> URI.parse() |> URI.to_string()
   end
 
   defp cached_manifest(%{} = manifest) do
