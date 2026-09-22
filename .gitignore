@@ -27,3 +27,12 @@ node_modules/
 
 # assets
 priv/static/*
+
+# Local environment
+.direnv/
+.nix/
+/envs/*
+!/envs/.env.example
+.env
+.env.*
+!.env.example
