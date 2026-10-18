@@ -214,13 +214,18 @@ defmodule PhoenixVite.Components do
       |> Enum.map(&prefetch_attributes(&1, assigns))
 
     assigns =
-      assign(assigns, assets: assets, concurrency: options[:concurrency], event: options[:event])
+      assign(assigns,
+        prefetch?: assets != [],
+        assets: script_json(assets),
+        concurrency: script_json(options[:concurrency]),
+        event: script_json(options[:event])
+      )
 
     ~H"""
-    <script :if={@assets != []} nonce={@nonce}>
+    <script :if={@prefetch?} nonce={@nonce}>
       (() => {
-        const queue = <%= script_json(@assets) %>
-        const next = () => {
+        const queue = <%= @assets %>
+        function next() {
           const asset = queue.shift()
           if (!asset) return
           const link = document.createElement("link")
@@ -228,8 +233,8 @@ defmodule PhoenixVite.Components do
           link.onload = link.onerror = next
           document.head.append(link)
         }
-        window.addEventListener(<%= script_json(@event) %>, () => setTimeout(() => {
-          for (let i = <%= script_json(@concurrency) %> || queue.length; i > 0; i--) next()
+        window.addEventListener(<%= @event %>, () => setTimeout(() => {
+          for (let i = <%= @concurrency %> || queue.length; i > 0; i--) next()
         }))
       })()
     </script>
@@ -251,11 +256,10 @@ defmodule PhoenixVite.Components do
       href: to_url.(Path.join("/", file))
     }
 
-    case crossorigin do
-      false -> attributes
-      nil -> attributes
-      true -> Map.put(attributes, :crossorigin, "")
-      value -> Map.put(attributes, :crossorigin, value)
+    cond do
+      !crossorigin -> attributes
+      crossorigin == true -> Map.put(attributes, :crossorigin, "")
+      true -> Map.put(attributes, :crossorigin, crossorigin)
     end
   end
 
