@@ -59,4 +59,47 @@ defmodule PhoenixVite.ManifestTest do
       assert [] = Manifest.imported_chunks(manifest, "js/app.js")
     end
   end
+
+  describe "prefetched_files/2" do
+    @json """
+    {
+      "_shared.js": {
+        "file": "assets/shared-B7PI925R.js",
+        "css": ["assets/shared-ChJ_j-JJ.css"]
+      },
+      "_chart.js": {
+        "file": "assets/chart-Dq2nYz1.js"
+      },
+      "baz.js": {
+        "file": "assets/baz-B2H3sXNv.js",
+        "imports": ["_shared.js"],
+        "dynamicImports": ["deep.js"],
+        "css": ["assets/baz-Xk2dQ.css"]
+      },
+      "deep.js": {
+        "file": "assets/deep-Hq8wK.js",
+        "imports": ["_chart.js", "_shared.js"]
+      },
+      "views/bar.js": {
+        "file": "assets/bar-gkvgaI9m.js",
+        "isEntry": true,
+        "imports": ["_shared.js"],
+        "dynamicImports": ["baz.js"]
+      }
+    }
+    """
+
+    test "walks dynamic imports, leaving out what the entry loads" do
+      assert Manifest.prefetched_files(Manifest.parse(@json), ["views/bar.js"]) == [
+               "assets/baz-B2H3sXNv.js",
+               "assets/baz-Xk2dQ.css",
+               "assets/deep-Hq8wK.js",
+               "assets/chart-Dq2nYz1.js"
+             ]
+    end
+
+    test "is empty without dynamic imports" do
+      assert Manifest.prefetched_files(Manifest.parse(@json), ["deep.js"]) == []
+    end
+  end
 end
